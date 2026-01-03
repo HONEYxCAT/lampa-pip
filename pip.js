@@ -660,6 +660,26 @@
 				if (pipActive) {
 					return;
 				}
+
+				if (postPipTimelineHash) {
+					var video = Lampa.PlayerVideo && Lampa.PlayerVideo.video ? Lampa.PlayerVideo.video() : null;
+
+					if (video && video.duration) {
+						var currentTime = video.currentTime;
+						var duration = video.duration;
+						var percent = Math.round((currentTime / duration) * 100);
+
+						Lampa.Timeline.update({
+							hash: postPipTimelineHash,
+							time: currentTime,
+							duration: duration,
+							percent: percent,
+						});
+					}
+
+					stopPostPipTimelineUpdate();
+				}
+
 				return originalPlayerVideoDestroy.call(this, savemeta);
 			};
 		}
@@ -731,38 +751,12 @@
 				}, 100);
 			}
 
-			if (e.type === "destroy") {
-				if (postPipTimelineHash) {
-					var video = Lampa.PlayerVideo && Lampa.PlayerVideo.video ? Lampa.PlayerVideo.video() : null;
-					if (video && video.duration) {
-						var currentTime = video.currentTime;
-						var duration = video.duration;
-						var percent = Math.round((currentTime / duration) * 100);
-
-						if (savedPlayData && savedPlayData.timeline && savedPlayData.timeline.handler) {
-							savedPlayData.timeline.time = currentTime;
-							savedPlayData.timeline.duration = duration;
-							savedPlayData.timeline.percent = percent;
-							savedPlayData.timeline.handler(percent, currentTime, duration);
-						} else {
-							Lampa.Timeline.update({
-								hash: postPipTimelineHash,
-								time: currentTime,
-								duration: duration,
-								percent: percent,
-							});
-						}
-					}
-				}
-
-				stopPostPipTimelineUpdate();
+			if (e.type === "destroy" || e.type === "close" || e.type === "end" || e.type === "stop") {
 				if (pipActive) {
 					closePiPCompletely();
 				}
 			}
 		});
-
-		Lampa.Listener.follow("activity", function (e) {});
 	}
 
 	if (window.appready) {
